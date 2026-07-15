@@ -1,373 +1,133 @@
-// ===============================
-// PRELOADER
-// ===============================
+// ============================================
+// TYPEWRITER
+// ============================================
+const roles = [
+  'Data Analyst',
+  'IoT Developer',
+  'Full-Stack Builder',
+  'Power BI Specialist'
+];
 
-window.addEventListener("load", () => {
+const typewriterEl = document.getElementById('typewriter');
+let roleIndex = 0;
+let charIndex = 0;
+let isDeleting = false;
 
-    const loader = document.getElementById("preloader");
+function typeLoop() {
+  const current = roles[roleIndex];
 
-    loader.style.opacity = "0";
+  if (isDeleting) {
+    charIndex--;
+  } else {
+    charIndex++;
+  }
 
-    loader.style.visibility = "hidden";
+  typewriterEl.textContent = current.substring(0, charIndex);
 
-    loader.style.transition = "0.8s";
+  let delay = isDeleting ? 45 : 90;
 
-});
+  if (!isDeleting && charIndex === current.length) {
+    delay = 1600;
+    isDeleting = true;
+  } else if (isDeleting && charIndex === 0) {
+    isDeleting = false;
+    roleIndex = (roleIndex + 1) % roles.length;
+    delay = 300;
+  }
 
-// ===============================
-// TYPING EFFECT
-// ===============================
-
-new Typed(".typing", {
-
-    strings: [
-
-        "Data Analyst",
-
-        "Power BI Developer",
-
-        "Business Intelligence Enthusiast",
-
-        "SQL Developer",
-
-        "Python Analyst"
-
-    ],
-
-    typeSpeed: 70,
-
-    backSpeed: 45,
-
-    backDelay: 1800,
-
-    loop: true
-
-});
-
-// ===============================
-// MOBILE MENU
-// ===============================
-
-const menuBtn = document.querySelector("#menu-btn");
-
-const nav = document.querySelector("nav");
-
-menuBtn.onclick = () => {
-
-    nav.classList.toggle("active");
-
+  setTimeout(typeLoop, delay);
 }
 
-// Close menu after clicking link
+typeLoop();
 
-document.querySelectorAll("nav a").forEach(link => {
+// ============================================
+// STAT COUNT-UP (triggers once hero stats are visible)
+// ============================================
+function animateStats() {
+  const stats = document.querySelectorAll('.stat__value');
+  stats.forEach(el => {
+    const target = parseInt(el.getAttribute('data-count'), 10);
+    const suffix = el.getAttribute('data-suffix') || '';
+    const duration = 1200;
+    const start = performance.now();
 
-    link.onclick = () => {
-
-        nav.classList.remove("active");
-
+    function step(now) {
+      const progress = Math.min((now - start) / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      el.textContent = Math.round(eased * target) + suffix;
+      if (progress < 1) requestAnimationFrame(step);
     }
+    requestAnimationFrame(step);
+  });
+}
 
-});
+// Run stat count-up shortly after load (hero is always in view first)
+window.addEventListener('load', () => setTimeout(animateStats, 500));
 
-// ===============================
-// ACTIVE NAVIGATION
-// ===============================
-
-const sections = document.querySelectorAll("section");
-
-const navLinks = document.querySelectorAll("header nav a");
-
-window.addEventListener("scroll", () => {
-
-    let current = "";
-
-    sections.forEach(section => {
-
-        const sectionTop = section.offsetTop - 150;
-
-        const sectionHeight = section.clientHeight;
-
-        if (pageYOffset >= sectionTop) {
-
-            current = section.getAttribute("id");
-
-        }
-
-    });
-
-    navLinks.forEach(link => {
-
-        link.classList.remove("active");
-
-        if (link.getAttribute("href") == "#" + current) {
-
-            link.classList.add("active");
-
-        }
-
-    });
-
-});
-
-// ===============================
-// STICKY HEADER
-// ===============================
-
-const header = document.querySelector("header");
-
-window.addEventListener("scroll", () => {
-
-    if (window.scrollY > 80) {
-
-        header.style.boxShadow = "0 5px 30px rgba(0,0,0,.35)";
-
-    }
-
-    else {
-
-        header.style.boxShadow = "none";
-
-    }
-
-});
-
-// ===============================
+// ============================================
 // SCROLL REVEAL
-// ===============================
-
-const hiddenElements = document.querySelectorAll(
-
-    ".section-title, .project-card, .skill-card, .timeline-item, .certificate-grid div, .contact-container div"
-
+// ============================================
+const revealTargets = document.querySelectorAll(
+  '.section__head, .about__grid, .skills__grid, .filters, .projects__grid, .timeline, .certs, .contact__inner'
 );
+revealTargets.forEach(el => el.classList.add('reveal'));
 
-hiddenElements.forEach(el => {
-
-    el.classList.add("hidden");
-
-});
-
-const observer = new IntersectionObserver(entries => {
-
-    entries.forEach(entry => {
-
-        if (entry.isIntersecting) {
-
-            entry.target.classList.add("show");
-
-        }
-
-    });
-
-});
-
-hiddenElements.forEach(el => observer.observe(el));
-
-// ===============================
-// SMOOTH SCROLL
-// ===============================
-
-document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-
-    anchor.addEventListener("click", function(e){
-
-        e.preventDefault();
-
-        document.querySelector(this.getAttribute("href"))
-
-        .scrollIntoView({
-
-            behavior:"smooth"
-
-        });
-
-    });
-
-});
-
-// ===============================
-// BACK TO TOP BUTTON
-// ===============================
-
-// Create Button
-
-const topBtn = document.createElement("div");
-
-topBtn.className = "top";
-
-topBtn.innerHTML = "<i class='fas fa-arrow-up'></i>";
-
-document.body.appendChild(topBtn);
-
-// Show Hide
-
-window.addEventListener("scroll",()=>{
-
-    if(window.scrollY>500){
-
-        topBtn.classList.add("active");
-
+const revealObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('is-visible');
+      revealObserver.unobserve(entry.target);
     }
+  });
+}, { threshold: 0.15 });
 
-    else{
+revealTargets.forEach(el => revealObserver.observe(el));
 
-        topBtn.classList.remove("active");
+// ============================================
+// PROJECT FILTERING
+// ============================================
+const filterButtons = document.querySelectorAll('.filter');
+const projectCards = document.querySelectorAll('.card');
 
-    }
+filterButtons.forEach(btn => {
+  btn.addEventListener('click', () => {
+    filterButtons.forEach(b => b.classList.remove('is-active'));
+    btn.classList.add('is-active');
 
-});
+    const filter = btn.getAttribute('data-filter');
 
-// Click
-
-topBtn.onclick=()=>{
-
-    window.scrollTo({
-
-        top:0,
-
-        behavior:"smooth"
-
+    projectCards.forEach(card => {
+      const tags = card.getAttribute('data-tags');
+      const match = filter === 'all' || tags.includes(filter);
+      card.classList.toggle('is-hidden', !match);
     });
-
-};
-
-// ===============================
-// PROJECT CARD ANIMATION
-// ===============================
-
-const cards=document.querySelectorAll(".project-card");
-
-cards.forEach(card=>{
-
-card.addEventListener("mouseenter",()=>{
-
-card.style.transform="translateY(-15px) scale(1.03)";
-
+  });
 });
 
-card.addEventListener("mouseleave",()=>{
+// ============================================
+// MOBILE NAV TOGGLE
+// ============================================
+const navToggle = document.getElementById('navToggle');
+const navLinks = document.getElementById('navLinks');
 
-card.style.transform="translateY(0px) scale(1)";
-
+navToggle.addEventListener('click', () => {
+  const isOpen = navLinks.classList.toggle('is-open');
+  navToggle.setAttribute('aria-expanded', isOpen);
 });
 
+navLinks.querySelectorAll('a').forEach(link => {
+  link.addEventListener('click', () => {
+    navLinks.classList.remove('is-open');
+    navToggle.setAttribute('aria-expanded', 'false');
+  });
 });
 
-// ===============================
-// SKILL CARD ANIMATION
-// ===============================
-
-const skills=document.querySelectorAll(".skill-card");
-
-skills.forEach(skill=>{
-
-skill.addEventListener("mouseenter",()=>{
-
-skill.style.boxShadow="0 10px 30px rgba(0,212,255,.5)";
-
+// ============================================
+// NAV BACKGROUND ON SCROLL
+// ============================================
+const nav = document.getElementById('nav');
+window.addEventListener('scroll', () => {
+  nav.style.boxShadow = window.scrollY > 20
+    ? '0 4px 20px rgba(0,0,0,0.3)'
+    : 'none';
 });
-
-skill.addEventListener("mouseleave",()=>{
-
-skill.style.boxShadow="";
-
-});
-
-});
-
-// ===============================
-// CONTACT CARD ANIMATION
-// ===============================
-
-const contact=document.querySelectorAll(".contact-container div");
-
-contact.forEach(card=>{
-
-card.addEventListener("mouseenter",()=>{
-
-card.style.transform="translateY(-10px)";
-
-});
-
-card.addEventListener("mouseleave",()=>{
-
-card.style.transform="translateY(0px)";
-
-});
-
-});
-
-// ===============================
-// IMAGE PARALLAX
-// ===============================
-
-const image=document.querySelector(".home-image img");
-
-window.addEventListener("mousemove",(e)=>{
-
-let x=(window.innerWidth/2-e.pageX)/40;
-
-let y=(window.innerHeight/2-e.pageY)/40;
-
-image.style.transform=
-
-`translate(${x}px,${y}px)`;
-
-});
-
-// ===============================
-// BUTTON RIPPLE EFFECT
-// ===============================
-
-const buttons=document.querySelectorAll(".btn");
-
-buttons.forEach(button=>{
-
-button.addEventListener("click",function(e){
-
-const circle=document.createElement("span");
-
-const diameter=Math.max(button.clientWidth,button.clientHeight);
-
-const radius=diameter/2;
-
-circle.style.width=circle.style.height=
-
-`${diameter}px`;
-
-circle.style.left=
-
-`${e.clientX-button.offsetLeft-radius}px`;
-
-circle.style.top=
-
-`${e.clientY-button.offsetTop-radius}px`;
-
-circle.classList.add("ripple");
-
-const ripple=button.getElementsByClassName("ripple")[0];
-
-if(ripple){
-
-ripple.remove();
-
-}
-
-button.appendChild(circle);
-
-});
-
-});
-
-// ===============================
-// CONSOLE MESSAGE
-// ===============================
-
-console.log(
-
-"%cDesigned & Developed by Anjali Rai",
-
-"color:#00d4ff;font-size:18px;font-weight:bold;"
-
-);
